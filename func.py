@@ -125,19 +125,79 @@ class Bra:
 
 class Operator:
     def __init__(self, matrix):
-        self.matrix = matrix
+        self.matrix = np.array(matrix)
 
+    def __add__(self, another):
+        return Operator(self.matrix + another.matrix)
+    
+    def __sub__(self, another):
+        return Operator(self.matrix - another.matrix)
+    
+    def __mul__(self, scalar):
+        return Operator(scalar * np.array(self.matrix))
+    
+    def __rmul__(self, scalar):
+        return Operator(self.__mul__(scalar))
+    
+    def __matmul__(self,another):
+        return Operator(np.matmul(self.matrix , another.matrix))
 
+    def op(self, another):
+        if not isinstance(another,Ket):
+            raise ValueError('Cannot Operate')
+        else:
+            return Ket(self.matrix@another.coef)
+        
+    def dagger(self):
+        return Operator(np.conjugate(self.matrix).T)
+    
+    def hermitian(self):
+        return np.array_equal(self.matrix,self.dagger().matrix)
+    
+    def antihermitian(self):
+        return np.array_equal(self.matrix,-self.dagger().matrix)
+    
+    def normal(self):
+        return np.array_equal(self.matrix@self.dagger().matrix,self.dagger().matrix@self.matrix)
+        
+    def unitary(self):
+        if self.matrix.shape[0]==self.matrix.shape[1]:
+            return np.array_equal(np.matmul(self.matrix,self.dagger().matrix),np.identity(np.shape(self.matrix)[0]))
+        else:
+            raise ValueError("It is not a square Matrix")
+        
+    def tensor(self, another):
+        if not isinstance(another, Operator):
+            raise ValueError('Tensor product can only be performed with another Operator.')
+        else:
+            return Operator(np.kron(self.matrix, another.matrix))
+        
+    def commutator(self, another):
+        if not isinstance(another, Operator):
+            raise ValueError("Commutator can only be computed with another Operator.")
+        return Operator(self.matrix @ another.matrix - another.matrix @ self.matrix)
+    
+    def anti_commutator(self, another):
+        if not isinstance(another, Operator):
+            raise ValueError("Anti-commutator can only be computed with another Operator.")
+        return Operator(self.matrix @ another.matrix + another.matrix @ self.matrix)
+    
+    def spectral_decom(self):
+        if not np.array_equal(self.matrix, self.dagger().matrix):
+            raise ValueError("Not an Hermitian operators.")
+        
+        eigenvalues, eigenvectors = np.linalg.eigh(self.matrix)
+        decomposition = []
+        for i in range(len(eigenvalues)):
+            eigenvalue = eigenvalues[i]
+            eigenvector = eigenvectors[:, i]
+            decomposition.append((eigenvalue, Ket(eigenvector)))
+        return decomposition
 
-a = Ket([12,23,23])
-print(a.coef)
-b = Bra([12,34,45])
-print(b.coef)
-
-m = 23
-c = m * a
-print(c)
-print(c.coef)
+        
+    def __repr__(self):
+        return f'Operator({self.matrix})'
+        
 
 
 
