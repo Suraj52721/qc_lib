@@ -17,13 +17,11 @@ Hs = j * (a + b + c)
 print(Hs)
 
 #  A truncated Quantum Harmonic Oscillator with Hamiltonian Hb
-n = 20
+n = 15
 a = np.zeros((n, n))
-for i in range(1, n):
-    a[i-1][i] = np.sqrt(i)
-    a[i][i-1] = np.sqrt(i)
-ad = a.T
-Hb = ad @ a + 0.5 * np.identity(n)
+for i in range(n):
+    a[i][i] = i +(1/2)
+Hb = np.array(a)
 print(Hb)
 
 # interaction Hamiltonian Hint
