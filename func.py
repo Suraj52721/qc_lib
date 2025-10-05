@@ -49,15 +49,13 @@ class Ket:
         else:
             return np.outer(self.coef,another.coef)
         
-    def tensor(self, another):
-        if not isinstance(another, Ket):
-            raise ValueError("Can Only Tensor product with Ket")
-        else:
-            m = []
-            for a in self.coef:
-               t = a * another.coef 
-               m.extend(t)
-            return Ket(m)
+    def tensor(self, *args):
+        result = self.coef
+        for another in args:
+            if not isinstance(another, Ket):
+                raise ValueError("Tensor product can only be performed with Kets.")
+            result = np.kron(result, another.coef)
+        return Ket(result)
 
 
     
@@ -112,15 +110,13 @@ class Bra:
         else:
             return np.outer(self.coef,another.coef)
         
-    def tensor(self, another):
-        if not isinstance(another, Bra):
-            raise ValueError("Can Only Tensor product with Bra")
-        else:
-            m = []
-            for a in self.coef:
-               t = a * another.coef 
-               m.extend(t)
-            return Bra(m)
+    def tensor(self, *args):
+        result = self.coef
+        for another in args:
+            if not isinstance(another, Bra):
+                raise ValueError("Tensor product can only be performed with Bras.")
+            result = np.kron(result, another.coef)
+        return Bra(result)
 
 
 class Operator:
@@ -166,11 +162,13 @@ class Operator:
         else:
             raise ValueError("It is not a square Matrix")
         
-    def tensor(self, another):
-        if not isinstance(another, Operator):
-            raise ValueError('Tensor product can only be performed with another Operator.')
-        else:
-            return Operator(np.kron(self.matrix, another.matrix))
+    def tensor(self, *args):
+        result = self.matrix
+        for another in args:
+            if not isinstance(another, Operator):
+                raise ValueError("Tensor product can only be performed with Operators.")
+            result = np.kron(result, another.matrix)
+        return Operator(result)
         
     def commutator(self, another):
         if not isinstance(another, Operator):
@@ -197,7 +195,36 @@ class Operator:
         
     def __repr__(self):
         return f'Operator({self.matrix})'
+    
+    def partial_trace(self, dims, trace_out):
+        if not isinstance(dims, list) or not isinstance(trace_out, list):
+            raise ValueError("Both 'dims' and 'trace_out' must be lists.")
+
+        if np.prod(dims) != self.matrix.shape[0]:
+            raise ValueError("Product of dimensions must match the size of the operator.")
+
+        reshaped = self.matrix.reshape(*dims, *dims)
+
+        for idx in sorted(trace_out, reverse=True):
+            reshaped = np.trace(reshaped, axis1=idx, axis2=idx + len(dims))
+
+        return Operator(reshaped)
         
+    def von_neumann_entropy(self):
+        if not np.array_equal(self.matrix, self.dagger().matrix):
+            raise ValueError("Von Neumann entropy can only be calculated for Hermitian operators.")
+
+        eigenvalues = np.linalg.eigvalsh(self.matrix)
+        eigenvalues = eigenvalues[eigenvalues > 0]
+        entropy = -np.sum(eigenvalues * np.log2(eigenvalues))
+        return entropy
+    
+
+    pauli_x = [[0, 1], [1, 0]]
+    pauli_y = [[0, -1j], [1j, 0]]
+    pauli_z = [[1, 0], [0, -1]]
+    identity = [[1, 0], [0, 1]]
+
 
 
 

@@ -22,3 +22,15 @@ print(d.tensor(e).matrix)
 f = Operator([[5,3+7j],[3-7j,2]])
 print(f.spectral_decom())
 print(d.op(c))
+
+
+k = Bra([20,23,23])
+h = Ket ([1+2j,2,0])
+
+innerproduct = k.inner_product(h)
+print(innerproduct)
+
+t = Operator([[0,0,1],[3,4,5],[4,8,7]])
+x = Operator([[0,0,3],[5,6,7],[2,3,4]])
+
+
