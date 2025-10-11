@@ -13,7 +13,7 @@ class Ket:
                 t=1
                 break
         if t==0:
-            self.coef = np.array(coef, dtype=int)
+            self.coef = np.array(coef, dtype=float)
     
     def __add__(self, other):
         if not isinstance(other, Ket):
@@ -74,7 +74,7 @@ class Bra:
                 t=1
                 break
         if t==0:
-            self.coef = np.array(coef, dtype=int)
+            self.coef = np.array(coef, dtype=float)
 
     def __add__(self, other):
         if not isinstance(other, Bra):
@@ -189,26 +189,30 @@ class Operator:
         for i in range(len(eigenvalues)):
             eigenvalue = eigenvalues[i]
             eigenvector = eigenvectors[:, i]
-            decomposition.append((eigenvalue, Ket(eigenvector)))
+            decomposition.append((eigenvalue, eigenvector))
         return decomposition
 
         
     def __repr__(self):
         return f'Operator({self.matrix})'
     
-    def partial_trace(self, dims, trace_out):
-        if not isinstance(dims, list) or not isinstance(trace_out, list):
-            raise ValueError("Both 'dims' and 'trace_out' must be lists.")
+    def partial_trace(self, dims, subsystem):
+        if not isinstance(dims, (list, tuple)) or not isinstance(subsystem, int):
+            raise ValueError("Invalid dimensions or subsystem index.")
+
+        if subsystem < 0 or subsystem >= len(dims):
+            raise ValueError("Subsystem index out of range.")
 
         if np.prod(dims) != self.matrix.shape[0]:
-            raise ValueError("Product of dimensions must match the size of the operator.")
+            raise ValueError("Dimensions do not match the size of the matrix.")
 
-        reshaped = self.matrix.reshape(*dims, *dims)
+        dim_A = dims[subsystem]
+        dim_B = int(self.matrix.shape[0] / dim_A)
 
-        for idx in sorted(trace_out, reverse=True):
-            reshaped = np.trace(reshaped, axis1=idx, axis2=idx + len(dims))
+        reshaped_matrix = self.matrix.reshape([dim_A, dim_B, dim_A, dim_B])
+        traced_matrix = np.trace(reshaped_matrix, axis1=0, axis2=2)
 
-        return Operator(reshaped)
+        return Operator(traced_matrix)
         
     def von_neumann_entropy(self):
         if not np.array_equal(self.matrix, self.dagger().matrix):
@@ -216,7 +220,7 @@ class Operator:
 
         eigenvalues = np.linalg.eigvalsh(self.matrix)
         eigenvalues = eigenvalues[eigenvalues > 0]
-        entropy = -np.sum(eigenvalues * np.log2(eigenvalues))
+        entropy = -np.sum(eigenvalues * np.log(eigenvalues))
         return entropy
     
 

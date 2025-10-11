@@ -17,7 +17,7 @@ Hs = j * (a + b + c)
 print(Hs)
 
 #  A truncated Quantum Harmonic Oscillator with Hamiltonian Hb
-n = 15
+n = 5
 a = np.zeros((n, n))
 for i in range(n):
     a[i][i] = i +(1/2)
